@@ -15,15 +15,17 @@ struct Node
 
 void read_tree(JsonReader* reader, struct Node* node)
 {
+  int i, j, z;
+
   node->type = NULL;
   node->window_class = NULL;
   node->window_instance = NULL;
   node->node_count = 0;
   node->nodes = NULL;
 
-  int i, j, z;
-
-  // In >4.8 type is a string
+  /*
+   * In >4.8 type is a string
+   */
   json_reader_read_member(reader, "type");
   node->type = json_reader_get_string_value(reader);
   json_reader_end_member(reader);
@@ -89,8 +91,7 @@ void free_tree(struct Node* node) {
 
 int find_node(struct Node node, const gchar* window_class, const gchar* window_instance)
 {
-  unsigned int i;
-  /*
+  unsigned int i, x, y;
   g_printf("Node type: %s\n", node.type);
   g_printf("Children: %d\n", node.node_count);
 
@@ -103,10 +104,9 @@ int find_node(struct Node node, const gchar* window_class, const gchar* window_i
   {
     g_printf("Instance: %s\n", node.window_instance);
   }
-  */
 
-  int x = node.window_class && window_class && g_strcmp0(window_class, node.window_class) == 0;
-  int y = node.window_instance && window_instance && g_strcmp0(window_instance, node.window_instance) == 0;
+  x = node.window_class && window_class && g_strcmp0(window_class, node.window_class) == 0;
+  y = node.window_instance && window_instance && g_strcmp0(window_instance, node.window_instance) == 0;
 
   if ((window_instance && window_class && x && y)
       || (window_class && x)
@@ -133,6 +133,12 @@ int main (int argc, char** argv)
   const gchar* window_class = NULL;
   const gchar* window_instance = NULL;
   int ret;
+  i3ipcConnection *conn;
+  gchar *reply;
+  JsonParser* parser;
+  JsonReader* reader;
+  JsonNode* root;
+  struct Node root_node;
 
   static struct option long_options[] = {
     {"window_class", required_argument, NULL, 'c'},
@@ -176,13 +182,6 @@ Usage: %s [OPTION] COMMAND\n\
     exit(1);
   }
 
-
-  i3ipcConnection *conn;
-  gchar *reply;
-  JsonParser* parser;
-  JsonReader* reader;
-  JsonNode* root;
-
   conn = i3ipc_connection_new(NULL, NULL);
   reply = i3ipc_connection_message(conn, I3IPC_MESSAGE_TYPE_GET_TREE, NULL, NULL);
 
@@ -195,14 +194,7 @@ Usage: %s [OPTION] COMMAND\n\
   root = json_parser_get_root(parser);
   reader = json_reader_new(root);
 
-  struct Node root_node;
   read_tree(reader, &root_node);
-
-  g_free(reply);
-  g_object_unref(conn);
-  g_free(root);
-  g_object_unref(parser);
-  g_object_unref(reader);
 
   if (find_node(root_node, window_class, window_instance))
   {
@@ -214,6 +206,11 @@ Usage: %s [OPTION] COMMAND\n\
   }
 
   free_tree(&root_node);
+  g_free(reply);
+  g_object_unref(conn);
+  g_free(root);
+  g_object_unref(parser);
+  g_object_unref(reader);
 
   return ret;
 }
