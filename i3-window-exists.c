@@ -1,6 +1,5 @@
 #include <stdlib.h>
 #include <glib/gprintf.h>
-#include <i3ipc-glib/i3ipc-glib.h>
 #include <json-glib/json-glib.h>
 #include <getopt.h>
 
@@ -133,7 +132,6 @@ int main (int argc, char** argv)
   const gchar* window_class = NULL;
   const gchar* window_instance = NULL;
   int ret;
-  i3ipcConnection *conn;
   gchar *reply;
   JsonParser* parser;
   JsonReader* reader;
@@ -182,8 +180,7 @@ Usage: %s [OPTION] COMMAND\n\
     exit(1);
   }
 
-  conn = i3ipc_connection_new(NULL, NULL);
-  reply = i3ipc_connection_message(conn, I3IPC_MESSAGE_TYPE_GET_TREE, NULL, NULL);
+  g_spawn_command_line_sync("i3-msg -t get_tree", &reply, NULL, NULL, NULL);
 
   parser = json_parser_new();
   if (!json_parser_load_from_data(parser, reply, -1, NULL))
@@ -206,11 +203,9 @@ Usage: %s [OPTION] COMMAND\n\
   }
 
   free_tree(&root_node);
-  g_free(reply);
-  g_object_unref(conn);
-  g_free(root);
-  g_object_unref(parser);
   g_object_unref(reader);
+  g_object_unref(parser);
+  g_free(reply);
 
   return ret;
 }
