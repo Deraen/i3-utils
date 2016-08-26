@@ -66,7 +66,7 @@ int main ()
     g_spawn_command_line_sync("i3-msg move workspace to output left", NULL, NULL, NULL, NULL);
   }
 
-  g_spawn_command_line_sync("3-msg [con_mark=\"switch_all\"] focus", NULL, NULL, NULL, NULL);
+  g_spawn_command_line_sync("3-msg [con_mark=\"switch-all\"] focus", NULL, NULL, NULL, NULL);
   g_spawn_command_line_sync("3-msg unmark switch-all", NULL, NULL, NULL, NULL);
 
   g_free(reply);
