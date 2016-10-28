@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <glib.h>
 #include <glib/gprintf.h>
 #include <json-glib/json-glib.h>
 
@@ -10,7 +11,6 @@ int main ()
   JsonNode* root;
   int workspaces, i, j, visible;
   const gchar** names;
-  gchar command[100];
 
   g_spawn_command_line_sync("i3-msg -t get_workspaces", &reply, NULL, NULL, NULL);
 
@@ -22,9 +22,6 @@ int main ()
 
   root = json_parser_get_root(parser);
   reader = json_reader_new(root);
-
-  g_spawn_command_line_sync("3-msg mark switch-all", NULL, NULL, NULL, NULL);
-
   workspaces = json_reader_count_elements(reader);
   names = g_malloc(sizeof(gchar*) * workspaces);
   j = 0;
@@ -59,16 +56,23 @@ int main ()
     json_reader_end_element(reader);
   }
 
+  GString* command = g_string_new("i3-msg ");
+
+  g_string_append(command, "mark switch-all; ");
+
   for (i = 0; i < workspaces; i++)
   {
-    g_sprintf(command, "i3-msg workspace %s", names[i]);
-    g_spawn_command_line_sync(command, NULL, NULL, NULL, NULL);
-    g_spawn_command_line_sync("i3-msg move workspace to output left", NULL, NULL, NULL, NULL);
+    g_string_append_printf(command, "workspace %s; ", names[i]);
+    g_string_append(command, "move workspace to output left; ");
   }
 
-  g_spawn_command_line_sync("3-msg [con_mark=\"switch-all\"] focus", NULL, NULL, NULL, NULL);
-  g_spawn_command_line_sync("3-msg unmark switch-all", NULL, NULL, NULL, NULL);
+  g_string_append(command, "[con_mark=\"switch-all\"] focus, ");
+  g_string_append(command, "unmark switch-all; ");
 
+  g_printf("%s\n", command->str);
+  g_spawn_command_line_sync(command->str, NULL, NULL, NULL, NULL);
+
+  g_string_free(command, TRUE);
   g_free(reply);
   g_object_unref(parser);
   g_object_unref(reader);
